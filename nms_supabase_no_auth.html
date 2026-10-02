@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NMS Team Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#070a0f;--panel:#0d121a;--panel2:#111925;--line:#202b3a;--blue:#1683ff;--text:#f5f7fb;--muted:#8b98aa;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
+.app{display:flex;min-height:100vh}.side{width:230px;position:fixed;inset:0 auto 0 0;background:#090d13;border-right:1px solid var(--line);padding:22px 14px}.brand{font-weight:900;font-size:23px;padding:5px 10px 25px}.brand span{color:var(--blue)}
+.nav button{width:100%;border:0;background:none;color:var(--muted);padding:12px;text-align:left;border-radius:9px;margin:3px 0}.nav button.active,.nav button:hover{background:#121d2b;color:#fff}
+.main{margin-left:230px;padding:28px;width:calc(100% - 230px);max-width:1500px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}h1{margin:0;font-size:28px}.sub{color:var(--muted);font-size:13px;margin-top:5px}
+.primary{border:0;background:var(--blue);color:#fff;padding:10px 14px;border-radius:9px;font-weight:700}.ghost{border:1px solid var(--line);background:var(--panel2);color:#fff;padding:9px 12px;border-radius:9px}.danger{border:1px solid #62222b;background:#351218;color:#ff9ca7;padding:9px 12px;border-radius:9px}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}.card{padding:17px}.label{color:var(--muted);font-size:13px}.num{font-size:27px;font-weight:900;margin-top:7px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.panel{padding:17px}.panel h2{font-size:17px;margin:0 0 15px}
+.section{display:none}.section.active{display:block}.toolbar{display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap}.search{background:var(--panel2);border:1px solid var(--line);color:#fff;padding:10px 12px;border-radius:9px;width:280px}
+.table{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line);font-size:14px}th{color:var(--muted);font-weight:600}.badge{display:inline-block;padding:5px 8px;border-radius:999px;font-size:12px;font-weight:700}.green{background:#0d2c1a;color:#62e38d}.blue{background:#0b2949;color:#65b8ff}.yellow{background:#33270b;color:#ffc85d}.red{background:#351218;color:#ff919d}.gray{background:#202832;color:#bbc4d0}
+.actions{display:flex;gap:6px;flex-wrap:wrap}.team{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--line);padding:14px;border-radius:11px;margin-bottom:9px}
+.modal-bg{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:18px;z-index:20}.modal-bg.show{display:flex}.modal{background:#0b1119;border:1px solid var(--line);border-radius:15px;width:min(620px,100%);max-height:90vh;overflow:auto;padding:20px}.modal h2{margin-top:0}.field{margin:12px 0}.field label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;background:#080c12;color:#fff;border:1px solid var(--line);padding:10px;border-radius:8px}.field textarea{min-height:80px}.form2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}.modalfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.checks{display:grid;grid-template-columns:1fr 1fr;gap:7px}.check{border:1px solid var(--line);padding:8px;border-radius:8px}.empty{color:var(--muted);text-align:center;padding:30px}.progress{height:8px;background:#202832;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;background:var(--blue)}
+.toast{position:fixed;right:18px;bottom:18px;background:#111923;border:1px solid var(--line);padding:11px 14px;border-radius:9px;display:none;z-index:50}.toast.show{display:block}
+.mobile{display:none}
+@media(max-width:900px){.side{width:200px}.main{margin-left:200px;width:calc(100% - 200px)}.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+@media(max-width:650px){.side{display:none}.main{margin:0;width:100%;padding:15px;padding-bottom:65px}.mobile{display:flex;position:fixed;bottom:0;left:0;right:0;background:#090d13;border-top:1px solid var(--line);z-index:15}.mobile button{flex:1;background:none;border:0;color:var(--muted);padding:9px;font-size:11px}.mobile button.active{color:#fff}.form2{grid-template-columns:1fr}.full{grid-column:auto}.cards{gap:8px}.card{padding:12px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side"><div class="brand">NMS <span>TEAM</span></div><div class="nav">
+<button class="active" data-s="dashboard">▦ &nbsp; Dashboard</button>
+<button data-s="tasks">✓ &nbsp; Tasks</button>
+<button data-s="members">◉ &nbsp; Members</button>
+<button data-s="teams">◆ &nbsp; Teams</button>
+</div></aside>
+<main class="main">
+<section id="dashboard" class="section active">
+<div class="top"><div><h1>Dashboard</h1><div class="sub">NMS Team Manager</div></div><button class="primary" onclick="taskModal()">+ New Task</button></div>
+<div class="cards"><div class="card"><div class="label">Members</div><div class="num" id="m1">0</div></div><div class="card"><div class="label">Teams</div><div class="num" id="m2">0</div></div><div class="card"><div class="label">Tasks</div><div class="num" id="m3">0</div></div><div class="card"><div class="label">Completed</div><div class="num" id="m4">0</div></div><div class="card"><div class="label">Progress</div><div class="num" id="m5">0%</div></div></div>
+<div class="grid"><div class="panel"><h2>Task Status</h2><div id="stats"></div></div><div class="panel"><h2>Teams</h2><div id="teamStats"></div></div></div>
+</section>
+<section id="tasks" class="section"><div class="top"><div><h1>Tasks</h1><div class="sub">Manage tasks and assignments</div></div><button class="primary" onclick="taskModal()">+ New Task</button></div><div class="panel"><div class="toolbar"><input class="search" id="taskQ" placeholder="Search tasks..." oninput="renderTasks()"></div><div id="taskTable" class="table"></div></div></section>
+<section id="members" class="section"><div class="top"><div><h1>Members</h1><div class="sub">Manage members and teams</div></div><button class="primary" onclick="memberModal()">+ Add Member</button></div><div class="panel"><div class="toolbar"><input class="search" id="memberQ" placeholder="Search members..." oninput="renderMembers()"></div><div id="memberTable" class="table"></div></div></section>
+<section id="teams" class="section"><div class="top"><div><h1>Teams</h1><div class="sub">Create and organize teams</div></div><button class="primary" onclick="teamModal()">+ Add Team</button></div><div class="panel" id="teamList"></div></section>
+</main></div>
+<div class="mobile"><button class="active" data-s="dashboard">▦<br>Dashboard</button><button data-s="tasks">✓<br>Tasks</button><button data-s="members">◉<br>Members</button><button data-s="teams">◆<br>Teams</button></div>
+<div id="modalBg" class="modal-bg"><div id="modal" class="modal"></div></div><div id="toast" class="toast"></div>
+
+<script>
+const SUPABASE_URL="PASTE_YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY="PASTE_YOUR_SUPABASE_ANON_KEY";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const STAT=["Completed","In Progress","Delayed with Excuse","Not Done","Out for Personal Reasons"];
+let D={teams:[],members:[],tasks:[],assignments:[]};
+
+const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const team=id=>D.teams.find(x=>String(x.id)===String(id));
+const mem=id=>D.members.find(x=>String(x.id)===String(id));
+const task=id=>D.tasks.find(x=>String(x.id)===String(id));
+const cls=s=>s==="Completed"?"green":s==="In Progress"?"blue":s==="Delayed with Excuse"?"yellow":s==="Not Done"?"red":"gray";
+function toast(x){let t=document.getElementById("toast");t.textContent=x;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2400)}
+async function load(){
+ try{
+  const [a,b,c,d]=await Promise.all([
+   sb.from("teams").select("*").order("created_at",{ascending:true}),
+   sb.from("members").select("*").order("name"),
+   sb.from("tasks").select("*").order("created_at",{ascending:false}),
+   sb.from("task_assignments").select("*")
+  ]);
+  for(const r of [a,b,c,d])if(r.error)throw r.error;
+  D={teams:a.data||[],members:b.data||[],tasks:c.data||[],assignments:d.data||[]};
+  render();
+ }catch(e){toast("Supabase error: "+e.message)}
+}
+function render(){dash();renderTasks();renderMembers();renderTeams()}
+function dash(){
+ const t=D.tasks.length,done=D.tasks.filter(x=>x.status==="Completed").length;
+ m1.textContent=D.members.filter(x=>x.active).length;m2.textContent=D.teams.filter(x=>x.active).length;m3.textContent=t;m4.textContent=done;m5.textContent=(t?Math.round(done/t*100):0)+"%";
+ stats.innerHTML=STAT.map(s=>{let n=D.tasks.filter(x=>x.status===s).length;return `<div style="margin:12px 0"><div style="display:flex;justify-content:space-between"><span>${esc(s)}</span><b>${n}</b></div><div class="progress"><i style="width:${t?n/t*100:0}%"></i></div></div>`}).join("");
+ teamStats.innerHTML=D.teams.filter(x=>x.active).length?D.teams.filter(x=>x.active).map(x=>`<div class="team"><div><b>${esc(x.name)}</b><div class="sub">${D.members.filter(m=>m.team_id===x.id).length} members · ${D.tasks.filter(q=>q.team_id===x.id).length} tasks</div></div></div>`).join(""):"<div class='empty'>No teams yet</div>"
+}
+function renderTeams(){
+ teamList.innerHTML=D.teams.filter(x=>x.active).map(x=>`<div class="team"><div><b>${esc(x.name)}</b><div class="sub">${D.members.filter(m=>m.team_id===x.id).length} members · ${D.tasks.filter(q=>q.team_id===x.id).length} tasks</div></div><div class="actions"><button class="ghost" onclick="teamModal('${x.id}')">Edit</button><button class="danger" onclick="delTeam('${x.id}')">Delete</button></div></div>`).join("")||"<div class='empty'>No teams yet</div>"
+}
+function renderMembers(){
+ let q=(document.getElementById("memberQ")?.value||"").toLowerCase(), a=D.members.filter(x=>x.active&&x.name.toLowerCase().includes(q));
+ memberTable.innerHTML=a.length?`<table><thead><tr><th>Member</th><th>Team</th><th>Tasks</th><th>Completed</th><th>Actions</th></tr></thead><tbody>${a.map(x=>{let as=D.assignments.filter(y=>y.member_id===x.id);return `<tr><td><b>${esc(x.name)}</b></td><td>${esc(team(x.team_id)?.name||"—")}</td><td>${as.length}</td><td>${as.filter(y=>y.status==="Completed").length}</td><td><div class="actions"><button class="ghost" onclick="memberModal('${x.id}')">Edit</button><button class="danger" onclick="delMember('${x.id}')">Delete</button></div></td></tr>`}).join("")}</tbody></table>`:"<div class='empty'>No members found</div>"
+}
+function renderTasks(){
+ let q=(document.getElementById("taskQ")?.value||"").toLowerCase(), a=D.tasks.filter(x=>(x.name+" "+(x.description||"")).toLowerCase().includes(q));
+ taskTable.innerHTML=a.length?`<table><thead><tr><th>Task</th><th>Team</th><th>Deadline</th><th>Status</th><th>Members</th><th>Actions</th></tr></thead><tbody>${a.map(x=>{let as=D.assignments.filter(y=>y.task_id===x.id);return `<tr><td><b>${esc(x.name)}</b><div class="sub">${esc(x.description||"")}</div></td><td>${esc(team(x.team_id)?.name||"—")}</td><td>${esc(x.deadline||"—")}</td><td><span class="badge ${cls(x.status)}">${esc(x.status)}</span></td><td>${as.map(y=>`<div style="margin:4px 0">${esc(mem(y.member_id)?.name||"Unknown")} <span class="badge ${cls(y.status)}">${esc(y.status)}</span></div>`).join("")||"—"}</td><td><div class="actions"><button class="ghost" onclick="taskModal('${x.id}')">Edit</button><button class="ghost" onclick="details('${x.id}')">Manage</button><button class="danger" onclick="delTask('${x.id}')">Delete</button></div></td></tr>`}).join("")}</tbody></table>`:"<div class='empty'>No tasks found</div>"
+}
+function show(id){document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll("[data-s]").forEach(x=>x.classList.toggle("active",x.dataset.s===id));scrollTo(0,0)}
+document.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>show(x.dataset.s));
+function open(x){modal.innerHTML=x;modalBg.classList.add("show")}function close(){modalBg.classList.remove("show")}modalBg.onclick=e=>{if(e.target===modalBg)close()}
+
+function memberModal(id){
+ let x=id?mem(id):{};
+ open(`<h2>${id?"Edit":"Add"} Member</h2><div class="field"><label>Name</label><input id="mn" value="${esc(x.name||"")}"></div><div class="field"><label>Team</label><select id="mt"><option value="">No team</option>${D.teams.filter(x=>x.active).map(t=>`<option value="${t.id}" ${t.id===x.team_id?"selected":""}>${esc(t.name)}</option>`).join("")}</select></div><div class="field"><label>Notes</label><textarea id="mo">${esc(x.notes||"")}</textarea></div><div class="modalfoot"><button class="ghost" onclick="close()">Cancel</button><button class="primary" onclick="saveMember('${id||""}')">Save</button></div>`)
+}
+async function saveMember(id){
+ let data={name:mn.value.trim(),team_id:mt.value||null,notes:mo.value};if(!data.name)return toast("Name is required");
+ let r=id?await sb.from("members").update(data).eq("id",id):await sb.from("members").insert(data);if(r.error)return toast(r.error.message);close();await load();toast("Saved")
+}
+async function delMember(id){if(!confirm("Delete member?"))return;let r=await sb.from("members").delete().eq("id",id);if(r.error)return toast(r.error.message);await load();toast("Deleted")}
+
+function teamModal(id){
+ let x=id?team(id):{};open(`<h2>${id?"Edit":"Add"} Team</h2><div class="field"><label>Team Name</label><input id="tn" value="${esc(x.name||"")}"></div><div class="modalfoot"><button class="ghost" onclick="close()">Cancel</button><button class="primary" onclick="saveTeam('${id||""}')">Save</button></div>`)
+}
+async function saveTeam(id){let name=tn.value.trim();if(!name)return toast("Team name is required");let r=id?await sb.from("teams").update({name}).eq("id",id):await sb.from("teams").insert({name});if(r.error)return toast(r.error.message);close();await load();toast("Saved")}
+async function delTeam(id){if(D.members.some(x=>x.team_id===id))return toast("Move members out of this team first");if(!confirm("Delete team?"))return;let r=await sb.from("teams").delete().eq("id",id);if(r.error)return toast(r.error.message);await load();toast("Deleted")}
+
+function taskModal(id){
+ let x=id?task(id):{}, selected=new Set(D.assignments.filter(a=>a.task_id===id).map(a=>a.member_id));
+ open(`<h2>${id?"Edit":"New"} Task</h2><div class="form2"><div class="field full"><label>Name</label><input id="qn" value="${esc(x.name||"")}"></div><div class="field full"><label>Description</label><textarea id="qd">${esc(x.description||"")}</textarea></div><div class="field"><label>Team</label><select id="qt" onchange="membersForTask()"><option value="">No team</option>${D.teams.filter(x=>x.active).map(t=>`<option value="${t.id}" ${t.id===x.team_id?"selected":""}>${esc(t.name)}</option>`).join("")}</select></div><div class="field"><label>Deadline</label><input id="qdate" type="date" value="${esc(x.deadline||"")}"></div><div class="field"><label>Status</label><select id="qs">${STAT.map(s=>`<option ${s===(x.status||"Not Done")?"selected":""}>${s}</option>`).join("")}</select></div><div class="field"><label>Members</label><div id="qm" class="checks"></div></div></div><div class="modalfoot"><button class="ghost" onclick="close()">Cancel</button><button class="primary" onclick="saveTask('${id||""}')">Save</button></div>`);
+ membersForTask(selected)
+}
+function membersForTask(sel=new Set()){let a=D.members.filter(x=>x.active&&(!qt.value||x.team_id===qt.value));qm.innerHTML=a.length?a.map(x=>`<label class="check"><input type="checkbox" name="qmem" value="${x.id}" ${sel.has(x.id)?"checked":""}> ${esc(x.name)}</label>`).join(""):"<span class='sub'>No members</span>"}
+async function saveTask(id){
+ let data={name:qn.value.trim(),description:qd.value,team_id:qt.value||null,deadline:qdate.value||null,status:qs.value};if(!data.name)return toast("Task name is required");
+ let r=id?await sb.from("tasks").update(data).eq("id",id).select().single():await sb.from("tasks").insert(data).select().single();if(r.error)return toast(r.error.message);let taskId=id||r.data.id;
+ let selected=[...document.querySelectorAll('input[name="qmem"]:checked')].map(x=>x.value), old=D.assignments.filter(x=>x.task_id===taskId);
+ let del=old.filter(x=>!selected.includes(x.member_id)).map(x=>x.id);if(del.length){let z=await sb.from("task_assignments").delete().in("id",del);if(z.error)return toast(z.error.message)}
+ let oldIds=new Set(old.map(x=>x.member_id)), add=selected.filter(x=>!oldIds.has(x)).map(member_id=>({task_id:taskId,member_id,status:"Not Done"}));if(add.length){let z=await sb.from("task_assignments").insert(add);if(z.error)return toast(z.error.message)}
+ close();await load();toast("Task saved")
+}
+async function delTask(id){if(!confirm("Delete task and assignments?"))return;let r=await sb.from("tasks").delete().eq("id",id);if(r.error)return toast(r.error.message);await load();toast("Deleted")}
+function details(id){
+ let t=task(id),as=D.assignments.filter(x=>x.task_id===id);open(`<h2>${esc(t.name)}</h2><div class="sub">${esc(t.description||"")}</div><h3>Members</h3>${as.length?as.map(a=>`<div class="team"><b>${esc(mem(a.member_id)?.name||"Unknown")}</b><select onchange="changeAssign('${a.id}',this.value)" style="background:#080c12;color:#fff;border:1px solid var(--line);padding:8px;border-radius:8px">${STAT.map(s=>`<option ${s===a.status?"selected":""}>${s}</option>`).join("")}</select></div>`).join(""):"<div class='empty'>No members assigned</div>"}<div class="modalfoot"><button class="ghost" onclick="close()">Close</button></div>`)
+}
+async function changeAssign(id,status){let r=await sb.from("task_assignments").update({status}).eq("id",id);if(r.error)return toast(r.error.message);await load();details(D.assignments.find(x=>x.id===id)?.task_id);toast("Updated")}
+load();
+</script>
+</body>
+</html>
